@@ -1,0 +1,35 @@
+name: fixit_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # ✅ Firebase (compatible versions)
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_storage: ^12.3.4
+  firebase_messaging: ^15.1.4
+  image_picker: ^0.8.7+5
+
+  # ✅ Utilities
+  provider: ^6.1.2
+  flutter_secure_storage: ^9.2.4
+  geolocator: ^14.0.2
+  uuid: ^4.5.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

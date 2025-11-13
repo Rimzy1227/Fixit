@@ -1,0 +1,69 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "fixit-app-17f73",
+          "appId": "1:97099869283:android:2d7d616829345dcab55c56",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "fixit-app-17f73",
+          "appId": "1:97099869283:ios:c04ab025966392e9b55c56",
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "fixit-app-17f73",
+          "appId": "1:97099869283:ios:c04ab025966392e9b55c56",
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "web": {
+        "default": {
+          "projectId": "fixit-app-17f73",
+          "appId": "1:97099869283:web:5a24d6689c05c427b55c56",
+          "fileOutput": "web/firebase-config.js"
+        }
+      },
+      "windows": {
+        "default": {
+          "projectId": "fixit-app-17f73",
+          "appId": "1:97099869283:web:824d2f2aa0d4a960b55c56",
+          "fileOutput": "windows/firebase_app_options.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "fixit-app-17f73",
+          "configurations": {
+            "android": "1:97099869283:android:2d7d616829345dcab55c56",
+            "ios": "1:97099869283:ios:c04ab025966392e9b55c56",
+            "macos": "1:97099869283:ios:c04ab025966392e9b55c56",
+            "web": "1:97099869283:web:5a24d6689c05c427b55c56",
+            "windows": "1:97099869283:web:824d2f2aa0d4a960b55c56"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint"
+      ]
+    }
+  ]
+}
