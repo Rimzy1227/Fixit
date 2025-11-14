@@ -24,9 +24,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     super.dispose();
   }
 
-  //
-  // 🔹 EMAIL VERIFICATION CHECK
-  //
   Future<void> _checkEmailVerified(String email, String role,
       {bool silent = false}) async {
     try {
@@ -45,6 +42,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       if (refreshedUser != null && refreshedUser.emailVerified) {
         _autoCheckTimer?.cancel();
         if (!mounted) return;
+
         Navigator.pushReplacementNamed(
           context,
           role == 'client'
@@ -55,7 +53,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         setState(() {
           _loading = false;
           _error =
-              'Email not verified yet. Please click the verification link in your inbox.';
+              'Email not verified yet. Please click the link sent to your email.';
         });
       }
     } catch (e) {
@@ -66,9 +64,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
   }
 
-  //
-  // 🔹 PHONE OTP VERIFY
-  //
   Future<void> _verifyPhone(String verificationId, String role) async {
     final code = _digitCtrls.map((c) => c.text.trim()).join();
     if (code.length != 6) {
@@ -109,9 +104,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
   }
 
-  //
-  // 🔹 OTP FIELD BUILDER
-  //
   Widget _pinField(int idx) {
     return SizedBox(
       width: 44,
@@ -132,12 +124,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     );
   }
 
-  //
-  // 🔹 AUTO CHECK EMAIL VERIFICATION EVERY 5s
-  //
   void _startAutoCheck(String email, String role) {
     _autoCheckTimer?.cancel();
-    _autoCheckTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _autoCheckTimer =
+        Timer.periodic(const Duration(seconds: 5), (_) {
       _checkEmailVerified(email, role, silent: true);
     });
   }
@@ -148,16 +138,18 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ??
             {};
 
-    final method = args['method'] as String? ?? 'email';
-    final role = args['role'] as String? ?? 'client';
-    final verificationId = args['verificationId'] as String? ?? '';
-    final phone = args['phone'] as String? ?? '';
-    final email = args['email'] as String? ?? '';
+    final method = args['method'] ?? 'email';
+    final role = args['role'] ?? 'client';
+    final verificationId = args['verificationId'] ?? '';
+    final phone = args['phone'] ?? '';
+    final email = args['email'] ?? '';
 
-    // start auto-check if email verification
     if (method == 'email' && _autoCheckTimer == null) {
       _startAutoCheck(email, role);
     }
+
+    final height =
+        MediaQuery.of(context).size.height - kToolbarHeight - 40;
 
     return Scaffold(
       appBar: AppBar(
@@ -166,144 +158,123 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         foregroundColor: Colors.white,
       ),
       body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (method == 'email') ...[
-                  const Icon(Icons.email_outlined,
-                      size: 80, color: Colors.black),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(18),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: height),
+            child: IntrinsicHeight(
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+
+                  Icon(
+                    method == 'email' ? Icons.email_outlined : Icons.sms_outlined,
+                    size: 80,
+                    color: Colors.black,
+                  ),
+
                   const SizedBox(height: 20),
+
                   Text(
-                    'We sent a verification link to your email:\n$email',
+                    method == 'email'
+                        ? 'We sent a verification link to your email:\n$email'
+                        : 'Enter the 6-digit code sent to $phone',
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 16),
                   ),
+
                   const SizedBox(height: 20),
-                  const Text(
-                    'After clicking the link, press below:',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
+
+                  if (method == 'phone')
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        6,
+                        (i) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: _pinField(i),
+                        ),
+                      ),
+                    ),
+
                   const SizedBox(height: 20),
+
                   if (_error != null)
-                    Text(_error!,
-                        style: const TextStyle(color: Colors.red)),
+                    Text(
+                      _error!,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+
                   const SizedBox(height: 12),
+
                   _loading
                       ? const CircularProgressIndicator()
                       : SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () => _checkEmailVerified(email, role),
+                            onPressed: () {
+                              if (method == 'email') {
+                                _checkEmailVerified(email, role);
+                              } else {
+                                _verifyPhone(verificationId, role);
+                              }
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.black,
                               padding:
                                   const EdgeInsets.symmetric(vertical: 14),
                             ),
-                            child: const Text('Check Verification'),
+                            child: Text(
+                              method == 'email'
+                                  ? 'Check Verification'
+                                  : 'Submit',
+                            ),
                           ),
                         ),
-                  const SizedBox(height: 12),
+
+                  const SizedBox(height: 20),
+
                   TextButton(
                     onPressed: () async {
-                      try {
-                        final user = FirebaseAuth.instance.currentUser;
-                        if (user != null && !user.emailVerified) {
-                          await user.sendEmailVerification();
-                          if (!mounted) return;
+                      if (method == 'email') {
+                        try {
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user != null && !user.emailVerified) {
+                            await user.sendEmailVerification();
+                            // ignore: use_build_context_synchronously
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Verification email resent')),
+                            );
+                          }
+                        } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Verification email resent')),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content:
-                                    Text('No user or already verified.')),
+                            SnackBar(content: Text('Resend failed: $e')),
                           );
                         }
-                      } catch (e) {
-                        
+                      } else {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Resend failed: $e')),
+                          const SnackBar(
+                              content: Text(
+                                  'Tap resend on the previous screen to get a new code.')),
                         );
                       }
                     },
-                    child: const Text('Resend Email'),
+                    child: Text(
+                      method == 'email'
+                          ? 'Resend Email'
+                          : 'Resend Code',
+                    ),
                   ),
-                ] else ...[
-                  const Icon(Icons.sms_outlined,
-                      size: 80, color: Colors.black),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Enter the 6-digit code sent to $phone',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      6,
-                      (i) => _pinField(i),
-                    ).intersperse(const SizedBox(width: 8)),
-                  ),
-                  const SizedBox(height: 20),
-                  if (_error != null)
-                    Text(_error!,
-                        style: const TextStyle(color: Colors.red)),
-                  const SizedBox(height: 12),
-                  _loading
-                      ? const CircularProgressIndicator()
-                      : SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () =>
-                                _verifyPhone(verificationId, role),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                            child: const Text('Submit'),
-                          ),
-                        ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Tap resend on the previous screen to get a new code.',
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text('Resend Code'),
-                  ),
+
+                  const Spacer(),
                 ],
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
-  }
-}
-
-//
-// Helper extension — add spacing between widgets in a list
-//
-extension _ListUtils<T> on List<T> {
-  List<T> intersperse(T item) {
-    if (length <= 1) return [...this];
-    final res = <T>[];
-    for (var i = 0; i < length; i++) {
-      res.add(this[i]);
-      if (i != length - 1) res.add(item);
-    }
-    return res;
   }
 }

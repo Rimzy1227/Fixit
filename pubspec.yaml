@@ -19,6 +19,8 @@ dependencies:
   firebase_storage: ^12.3.4
   firebase_messaging: ^15.1.4
   image_picker: ^0.8.7+5
+  permission_handler: ^11.4.0
+  path: ^1.8.3
 
   # ✅ Utilities
   provider: ^6.1.2

@@ -21,8 +21,8 @@ class _AddProviderScreenState extends State<AddProviderScreen> {
     final email = _emailCtrl.text.trim();
     final phone = _phoneCtrl.text.trim();
 
-    if (name.isEmpty || email.isEmpty) {
-      setState(() => _error = "All fields required");
+    if (name.isEmpty || email.isEmpty || !email.contains('@')) {
+      setState(() => _error = "Please enter a valid name and email");
       return;
     }
 
@@ -32,14 +32,13 @@ class _AddProviderScreenState extends State<AddProviderScreen> {
     });
 
     try {
-      // Auto-create provider Auth user with temporary password
+      final tempPassword = "Temp#1234"; // internal temporary password
       final newUser = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
-        password: "provider123", // default temp password
+        password: tempPassword,
       );
 
-      final currentUser = FirebaseAuth.instance.currentUser!;
-      final contractorId = currentUser.uid;
+      final contractorId = FirebaseAuth.instance.currentUser!.uid;
 
       // Create provider record under contractor
       await FirebaseFirestore.instance
@@ -56,7 +55,7 @@ class _AddProviderScreenState extends State<AddProviderScreen> {
         'approved': false,
       });
 
-      // Add to users table
+      // Add to users collection
       await FirebaseFirestore.instance.collection('users').doc(newUser.user!.uid).set({
         'role': 'provider',
         'email': email,
@@ -65,13 +64,43 @@ class _AddProviderScreenState extends State<AddProviderScreen> {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
+      // Send password reset email
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Provider account created successfully!")),
+
+      // Show success dialog
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Provider Created"),
+          content: Text(
+            "$name has been added successfully!\n\n"
+            "A password setup email has been sent to $email. "
+            "Please ask the provider to check their inbox and spam folder.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
       );
+
       Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        if (e.code == 'email-already-in-use') {
+          _error = "This email is already registered";
+        } else if (e.code == 'weak-password') {
+          _error = "Temporary password is too weak";
+        } else {
+          _error = "Error: ${e.message}";
+        }
+      });
     } catch (e) {
-      setState(() => _error = "Error: $e");
+      setState(() => _error = "Unexpected error: $e");
     } finally {
       setState(() => _saving = false);
     }
@@ -85,24 +114,39 @@ class _AddProviderScreenState extends State<AddProviderScreen> {
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            TextField(controller: _nameCtrl, decoration: const InputDecoration(labelText: "Full Name")),
+            TextField(
+              controller: _nameCtrl,
+              decoration: const InputDecoration(labelText: "Full Name"),
+            ),
             const SizedBox(height: 10),
-            TextField(controller: _emailCtrl, decoration: const InputDecoration(labelText: "Email")),
+            TextField(
+              controller: _emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(labelText: "Email"),
+            ),
             const SizedBox(height: 10),
-            TextField(controller: _phoneCtrl, decoration: const InputDecoration(labelText: "Phone")),
+            TextField(
+              controller: _phoneCtrl,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(labelText: "Phone"),
+            ),
             const SizedBox(height: 20),
-            if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),
+            if (_error != null)
+              Text(_error!, style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 10),
             _saving
                 ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
-                    onPressed: _createProvider,
-                    child: const Text("Create Provider"),
+                : SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+                      onPressed: _createProvider,
+                      child: const Text("Create Provider"),
+                    ),
                   ),
           ],
         ),

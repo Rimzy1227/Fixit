@@ -17,7 +17,7 @@ class _RegisterSelectScreenState extends State<RegisterSelectScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 36),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
                 "Create an account",
@@ -26,19 +26,26 @@ class _RegisterSelectScreenState extends State<RegisterSelectScreen> {
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _roleButton(
-                    icon: Icons.person,
-                    label: "Client",
-                    selected: isClient,
-                    onTap: () => setState(() => isClient = true),
+                  SizedBox(
+                    width: 120,
+                    child: _roleButton(
+                      icon: Icons.person,
+                      label: "Client",
+                      selected: isClient,
+                      onTap: () => setState(() => isClient = true),
+                    ),
                   ),
                   const SizedBox(width: 24),
-                  _roleButton(
-                    icon: Icons.build,
-                    label: "Contractor",
-                    selected: !isClient,
-                    onTap: () => setState(() => isClient = false),
+                  SizedBox(
+                    width: 120,
+                    child: _roleButton(
+                      icon: Icons.build,
+                      label: "Contractor",
+                      selected: !isClient,
+                      onTap: () => setState(() => isClient = false),
+                    ),
                   ),
                 ],
               ),
@@ -90,42 +97,36 @@ class _RegisterSelectScreenState extends State<RegisterSelectScreen> {
     required bool selected,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: selected ? Colors.black : Colors.transparent,
-              border: Border.all(color: Colors.black),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: selected
-                  ? [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
-                      )
-                    ]
-                  : [],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: selected ? Colors.black : Colors.transparent,
+                border: Border.all(color: Colors.black),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Icon(
+                icon,
+                color: selected ? Colors.white : Colors.black,
+                size: 32,
+              ),
             ),
-            padding: const EdgeInsets.all(16),
-            child: Icon(
-              icon,
-              color: selected ? Colors.white : Colors.black,
-              size: 32,
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                color: selected ? Colors.black : Colors.grey[700],
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-              color: selected ? Colors.black : Colors.grey[700],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
